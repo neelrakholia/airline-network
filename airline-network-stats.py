@@ -53,22 +53,39 @@ def loadedges(filename, air_graph):
 
             # get attributes
             row = line.strip().split(',')
-            if date == row[0]:
 
-                # add edge and attributes
-                air_graph.AddEdge(int(row[COL_ORIGIN]), int(row[COL_DEST]), \
-                eid)
-                air_graph.AddIntAttrDatE(eid, int(row[1]), "Airline-ID")
-                air_graph.AddIntAttrDatE(eid, int(row[2].replace('"', '')), \
-                "Flight-No")
+            # make a new graph for a new date
+            if date != row[0]:
+                air_graph = snap.GetMxWcc(air_graph)
+                tosave = snap.TFOut(date + ".csv")
+                air_graph.Save(tosave)
+                print air_graph.GetNodes()
+                tosave.Flush()
 
-                # update edge index
-                eid += 1
-
-
+                # make a fresh copt of the graph
+                air_graph = loadnodes(sys.argv[1])
 
 
+            # add edge and attributes
+            air_graph.AddEdge(int(row[COL_ORIGIN]), int(row[COL_DEST]), \
+            eid)
+            air_graph.AddIntAttrDatE(eid, int(row[1]), "Airline-ID")
+            air_graph.AddIntAttrDatE(eid, int(row[2].replace('"', '')), \
+            "Flight-No")
 
+            # update edge index
+            eid += 1
+
+            # update date
+            date = row[0]
+
+        # save the last graph
+        air_graph = snap.GetMxWcc(air_graph)
+        tosave = snap.TFOut(date + ".csv")
+        air_graph.Save(tosave)
+        print air_graph.GetNodes()
+        tosave.Flush()
+        air_graph = loadnodes(sys.argv[1])
 
 ###############################################################################
 

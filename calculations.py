@@ -164,7 +164,7 @@ f = open("temp_close_res.txt", 'w')
 for itm in close_resiliency:
     f.write("%f\n" % itm)
 
-plt.plot(range(1, len(resiliency) + 1), resiliency)
+plt.plot(range(1, len(close_resiliency) + 1), close_resiliency)
 plt.show()
 
 

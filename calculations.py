@@ -11,11 +11,12 @@ graphDict = {}
 
 # load all the graphs and put them in the graphDict
 # where the key is the date and the value is the SNAP graph object
+'''
 for date in os.listdir(directory):
-    FIn = TFIn(date)
-    G4 = TNGraph.Load(FIn)
+    FIn = snap.TFIn(os.path.join(os.getcwd(), 'data', date))
+    G4 = snap.TNGraph.Load(FIn)
     graphDict[date] = G4
-
+'''
 # want a function that gets the nodes with the highest betweenness centrality
 # and deletes them from the graph
 # and then computes the size of the largest weakly connected components
@@ -48,8 +49,10 @@ def computeResiliency(graph, toPlot):
     return resiliencyIndex
 
 
-
+FIn = snap.TFIn('2015-01-31.graph')
+G4 = snap.TNGraph.Load(FIn)
+computeResiliency(G4, True)
 
 
 #for date, graphObject in graphDict.iteritems():
-#    computeResiliency(graphObject, FALSE)
+#    computeResiliency(graphObject, False)

@@ -49,7 +49,7 @@ def loadedges(filename, air_graph):
         next(f)
 
         eid = 0
-        date = "2015-01-01"
+        date = str(sys.argv[3])
 
         dir_path = os.path.join(os.getcwd(), "data")
 
@@ -64,7 +64,7 @@ def loadedges(filename, air_graph):
             # make a new graph for a new date
             if date != row[0]:
                 air_graph = snap.GetMxWcc(air_graph)
-                tosave = snap.TFOut(os.path.join(dir_path, date))
+                tosave = snap.TFOut(os.path.join(dir_path, date + ".graph"))
                 air_graph.Save(tosave)
                 print air_graph.GetNodes()
                 tosave.Flush()
@@ -88,7 +88,7 @@ def loadedges(filename, air_graph):
 
         # save the last graph
         air_graph = snap.GetMxWcc(air_graph)
-        tosave = snap.TFOut(os.path.join(dir_path, date))
+        tosave = snap.TFOut(os.path.join(dir_path, date + ".graph"))
         air_graph.Save(tosave)
         print air_graph.GetNodes()
         tosave.Flush()

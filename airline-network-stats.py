@@ -1,6 +1,7 @@
 ###############################################################################
 # Input nodes: airports.csv--list of all airports used
 # Input edges: 15-01-network-data.csv--list of all flights operating in Janurary 2015
+# python airline-network-stats.py airports.csv 15-01-network-data.csv
 
 ###############################################################################
 
@@ -9,6 +10,7 @@ import snap
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import os
 
 # columns to search for node ids
 COL_ORIGIN = 3
@@ -49,6 +51,11 @@ def loadedges(filename, air_graph):
         eid = 0
         date = "2015-01-01"
 
+        dir_path = os.path.join(os.getcwd(), "data")
+
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
         for line in f:
 
             # get attributes
@@ -57,7 +64,7 @@ def loadedges(filename, air_graph):
             # make a new graph for a new date
             if date != row[0]:
                 air_graph = snap.GetMxWcc(air_graph)
-                tosave = snap.TFOut(date + ".csv")
+                tosave = snap.TFOut(os.path.join(dir_path, date))
                 air_graph.Save(tosave)
                 print air_graph.GetNodes()
                 tosave.Flush()
@@ -81,7 +88,7 @@ def loadedges(filename, air_graph):
 
         # save the last graph
         air_graph = snap.GetMxWcc(air_graph)
-        tosave = snap.TFOut(date + ".csv")
+        tosave = snap.TFOut(os.path.join(dir_path, date))
         air_graph.Save(tosave)
         print air_graph.GetNodes()
         tosave.Flush()

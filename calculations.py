@@ -152,19 +152,19 @@ def computeResiliencyClose(graph, toPlot):
 
 directory = os.path.join(os.getcwd(), 'data')
 
-close_resiliency = []
+btwn_resiliency = []
 counter = 0
 for date in os.listdir(directory):
     FIn = snap.TFIn(os.path.join(os.getcwd(), 'data', date))
     G4 = snap.TNEANet.Load(FIn)
-    close_resiliency.append(computeResiliencyClose(G4, False))
+    btwn_resiliency.append(computeResiliencyBetwn(G4, False))
 
-print close_resiliency
-f = open("temp_close_res.txt", 'w')
-for itm in close_resiliency:
+print btwn_resiliency
+f = open("temp_btwn_res.txt", 'w')
+for itm in btwn_resiliency:
     f.write("%f\n" % itm)
 
-plt.plot(range(1, len(resiliency) + 1), resiliency)
+plt.plot(range(1, len(btwn_resiliency)+1), btwn_resiliency)
 plt.show()
 
 

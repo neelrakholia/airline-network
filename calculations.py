@@ -53,7 +53,7 @@ def computeResiliencyBetwn(graph, toPlot):
     if toPlot:
         plt.plot(fractionNodesRemoved, fractionInLWCC)
         plt.xlabel('Fraction Nodes Removed')
-        plt.ylabel('Fraciton of Nodes still in LWCC')
+        plt.ylabel('Fraction of Nodes still in LWCC')
         plt.title('Nodes in LWCC vs. Removal of Nodes')
         plt.show()
 
@@ -89,7 +89,7 @@ def computeResiliencyDeg(graph, toPlot):
     if toPlot:
         plt.plot(fractionNodesRemoved, fractionInLWCC)
         plt.xlabel('Fraction Nodes Removed')
-        plt.ylabel('Fraciton of Nodes still in LWCC')
+        plt.ylabel('Fraction of Nodes still in LWCC')
         plt.title('Nodes in LWCC vs. Removal of Nodes')
         plt.show()
 
@@ -132,13 +132,50 @@ def computeResiliencyClose(graph, toPlot):
     if toPlot:
         plt.plot(fractionNodesRemoved, fractionInLWCC)
         plt.xlabel('Fraction Nodes Removed')
-        plt.ylabel('Fraciton of Nodes still in LWCC')
+        plt.ylabel('Fraction of Nodes still in LWCC')
         plt.title('Nodes in LWCC vs. Removal of Nodes')
         plt.show()
 
     return resiliencyIndex
 
+def computeShortPathDegree(graph, toPlot):
+    # degreeCentralityDict = {}
+    #for N in graph.Nodes():
+    degreeCentralityDict = {}
+    for N in graph.Nodes():
+        degreeCentralityDict[N.GetId()] = N.GetOutDeg() + N.GetInDeg()
 
+    avgEcc_deg = []
+    fractionNodesRemoved = []
+    initial_num_nodes = graph.GetNodes()
+    for i in range(graph.GetNodes()):
+        eccentricities = []
+        for node in graph.Nodes():
+            eccentricities.append(snap.GetNodeEcc(graph, node.GetId(), True))
+        avgEcc = float(sum(eccentricities))/len(eccentricities)
+        avgEcc_deg.append(avgEcc)
+
+        fractionNodesRemoved.append(float(i)/initial_num_nodes)
+        largestNode = max(degreeCentralityDict, key=degreeCentralityDict.get)
+        del degreeCentralityDict[largestNode]
+        graph.DelNode(largestNode)
+
+    y = np.array(avgEcc_deg)
+    maxECC = np.max(y)
+    y = y/maxECC
+
+    # Compute the area using the composite trapezoidal rule.
+    eccentricityIndex = trapz(y, dx=float(1)/initial_num_nodes) # area under curve
+
+
+    if toPlot:
+        plt.plot(fractionNodesRemoved, avgEcc_deg)
+        plt.xlabel('Fraction Nodes Removed')
+        plt.ylabel('Fraction of Nodes still in LWCC')
+        plt.title('Nodes in LWCC vs. Removal of Nodes')
+        plt.show()
+
+    return eccentricityIndex
 
 def computeShortPathCloseness(graph, toPlot):
     ID = []
@@ -158,7 +195,7 @@ def computeShortPathCloseness(graph, toPlot):
     for index, row in closeCent.iterrows():
         eccentricities = []
         for node in graph.Nodes():
-            eccentricites.append(snap.GetNodeEcc(graph, node, True))
+            eccentricities.append(snap.GetNodeEcc(graph, node.GetId(), True))
         avgEcc = float(sum(eccentricities))/len(eccentricities)
         avgEcc_close.append(avgEcc)
         fractionNodesRemoved.append(float(count)/initial_num_nodes)
@@ -168,19 +205,20 @@ def computeShortPathCloseness(graph, toPlot):
         graph.DelNode(largestNode)
 
     y = np.array(avgEcc_close)
-
+    maxECC = np.max(y)
+    y = y/maxECC
 
     # Compute the area using the composite trapezoidal rule.
-    resiliencyIndex = trapz(y, dx=float(1)/initial_num_nodes) # area under curve
+    eccentricityIndex = trapz(y, dx=float(1)/initial_num_nodes) # area under curve
 
     if toPlot:
-        plt.plot(fractionNodesRemoved, avgEcc_close)
+        plt.plot(fractionNodesRemoved, y)
         plt.xlabel('Fraction Nodes Removed')
         plt.ylabel('Average Eccentricity')
         plt.title('Average Eccentricity')
         plt.show()
 
-    return resiliencyIndex
+    return eccentricityIndex
 
 
 
@@ -211,9 +249,9 @@ counter = 0
 for date in os.listdir(directory):
     FIn = snap.TFIn(os.path.join(os.getcwd(), 'data', date))
     G4 = snap.TNEANet.Load(FIn)
-    short_path_close.append(computeShortPathCloseness(G4, False))
+    short_path_close.append(computeShortPathDegree(G4, False))
 
 print short_path_close
-f = open("short_path_close.txt", 'w')
+f = open("short_path_degree.txt", 'w')
 for itm in short_path_close:
     f.write("%f\n" % itm)

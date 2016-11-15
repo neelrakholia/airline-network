@@ -10,12 +10,7 @@ import matplotlib.pyplot as plt
 
 # load all the graphs and put them in the graphDict
 # where the key is the date and the value is the SNAP graph object
-'''
-for date in os.listdir(directory):
-    FIn = snap.TFIn(os.path.join(os.getcwd(), 'data', date))
-    G4 = snap.TNGraph.Load(FIn)
-    graphDict[date] = G4
-'''
+
 # want a function that gets the nodes with the highest betweenness centrality
 # and deletes them from the graph
 # and then computes the size of the largest weakly connected components
@@ -145,13 +140,58 @@ def computeResiliencyClose(graph, toPlot):
 
 
 
-# FIn = snap.TFIn(sys.argv[1])
-# G4 = snap.TNEANet.Load(FIn)
-# print G4.GetNodes()
-# print computeResiliencyClose(G4, True)
+def computeShortPathCloseness(graph, toPlot):
+    ID = []
+    closeness = []
+    for N in graph.Nodes():
+        ID.append(N.GetId())
+        closeness.append(snap.GetClosenessCentr(graph, N.GetId()))
+
+    closeCent = pd.DataFrame({'Closeness' : closeness}, index = ID)
+    closeCent = closeCent.sort(['Closeness'], ascending = False)
+
+
+    avgEcc_close = []
+    fractionNodesRemoved = []
+    initial_num_nodes = graph.GetNodes()
+    count = 0
+    for index, row in closeCent.iterrows():
+        eccentricities = []
+        for node in graph.Nodes():
+            eccentricites.append(snap.GetNodeEcc(graph, node, True))
+        avgEcc = float(sum(eccentricities))/len(eccentricities)
+        avgEcc_close.append(avgEcc)
+        fractionNodesRemoved.append(float(count)/initial_num_nodes)
+        count += 1
+
+        largestNode = index
+        graph.DelNode(largestNode)
+
+    y = np.array(avgEcc_close)
+
+
+    # Compute the area using the composite trapezoidal rule.
+    resiliencyIndex = trapz(y, dx=float(1)/initial_num_nodes) # area under curve
+
+    if toPlot:
+        plt.plot(fractionNodesRemoved, avgEcc_close)
+        plt.xlabel('Fraction Nodes Removed')
+        plt.ylabel('Average Eccentricity')
+        plt.title('Average Eccentricity')
+        plt.show()
+
+    return resiliencyIndex
+
+
+
+
+
+# ----------------------------------------------------------------------
 
 directory = os.path.join(os.getcwd(), 'data')
 
+# Calculate Betweenness Centrality Resiliency Plot
+'''
 btwn_resiliency = []
 counter = 0
 for date in os.listdir(directory):
@@ -163,12 +203,17 @@ print btwn_resiliency
 f = open("temp_btwn_res.txt", 'w')
 for itm in btwn_resiliency:
     f.write("%f\n" % itm)
+'''
 
-plt.plot(range(1, len(btwn_resiliency)+1), btwn_resiliency)
-plt.show()
+# Calculate Closeness Centrality Longest Shortest Path Plot
+short_path_close = []
+counter = 0
+for date in os.listdir(directory):
+    FIn = snap.TFIn(os.path.join(os.getcwd(), 'data', date))
+    G4 = snap.TNEANet.Load(FIn)
+    short_path_close.append(computeShortPathCloseness(G4, False))
 
-
-
-
-#for date, graphObject in graphDict.iteritems():
-#    computeResiliency(graphObject, False)
+print short_path_close
+f = open("short_path_close.txt", 'w')
+for itm in short_path_close:
+    f.write("%f\n" % itm)

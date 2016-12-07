@@ -60,6 +60,132 @@ def computeResiliencyBetwn(graph, toPlot):
 
     return resiliencyIndex
 
+# load all the graphs and put them in the graphDict
+# where the key is the date and the value is the SNAP graph object
+
+# want a function that gets the nodes with the highest betweenness centrality
+# and deletes them from the graph
+# and then computes the size of the largest weakly connected components
+def computeResiliencyBetwnEdge(graph, toPlot, attr):
+    # degreeCentralityDict = {}
+    #for N in graph.Nodes():
+    Nodes = snap.TIntFltH()
+    Edges = snap.TIntPrFltH()
+    snap.GetBetweennessCentr(graph, Nodes, Edges, 1.0)
+
+    ID = []
+    betweenness = []
+    for edge in Edges:
+        #ID.append(edge.GetId())
+        ID.append((edge.GetVal1(), edge.GetVal2()))
+        ID.append((edge.GetVal2(), edge.GetVal1()))
+        betweenness.append(Edges[edge])
+        betweenness.append(Edges[edge])
+
+    btwnCent = pd.DataFrame({'Betweenness' : betweenness}, index = ID)
+    btwnCent = btwnCent.sort(['Betweenness'], ascending = False)
+    print len(ID)
+
+
+    fractionInLWCC = []
+    fractionEdgesRemoved = []
+    initial_num_nodes = graph.GetNodes()
+    initial_num_edges = len(ID)#graph.GetEdges()
+    count = 0
+    for index, row in btwnCent.iterrows():
+        fractionInLWCC.append(snap.GetMxWccSz(graph)*graph.GetNodes()/\
+                                initial_num_nodes)
+        fractionEdgesRemoved.append(float(count)/initial_num_edges)
+        count += 1
+        largestEdge= index
+        if graph.IsEdge(largestEdge[0], largestEdge[1]):
+        #print graph.IsNode(largestEdge[1])
+            # print graph.GetEdges()
+        #largestNode = np.max(degreeCentralityDict, key=degreeCentralityDict.get)
+            graph.DelEdge(largestEdge[0], largestEdge[1])
+            # graph.DelEdge(largestEdge[1], largestEdge[0])
+
+
+    y = np.array(fractionInLWCC)
+
+
+    # Compute the area using the composite trapezoidal rule.
+    resiliencyIndex = trapz(y, dx=float(1)/initial_num_edges) # area under curve
+
+    if toPlot:
+        plt.plot(fractionEdgesRemoved, fractionInLWCC)
+        plt.xlabel('Fraction Edges Removed')
+        plt.ylabel('Fraction of Nodes still in LWCC')
+        plt.title('Nodes in LWCC vs. Removal of Edges')
+        plt.show()
+
+    return resiliencyIndex
+
+# want a function that gets the nodes with the highest betweenness centrality
+# and deletes them from the graph
+# and then computes the size of the largest weakly connected components
+def computeResiliencyBetwnEdgeByAirline(graph, toPlot, attr, airID):
+    # degreeCentralityDict = {}
+    #for N in graph.Nodes():
+    Nodes = snap.TIntFltH()
+    Edges = snap.TIntPrFltH()
+
+    for e in graph.Edges():
+        if attr[e.GetId()][0] not in airID:
+            graph.DelEdge(e.GetId())
+
+    graph = snap.GetMxWcc(graph)
+    print graph.GetNodes()
+    snap.GetBetweennessCentr(graph, Nodes, Edges, 1.0)
+
+    ID = []
+    betweenness = []
+    for edge in Edges:
+        #ID.append(edge.GetId())
+        ID.append((edge.GetVal1(), edge.GetVal2()))
+        ID.append((edge.GetVal2(), edge.GetVal1()))
+        betweenness.append(Edges[edge])
+        betweenness.append(Edges[edge])
+
+    btwnCent = pd.DataFrame({'Betweenness' : betweenness}, index = ID)
+    btwnCent = btwnCent.sort(['Betweenness'], ascending = False)
+    print len(ID)
+
+
+    fractionInLWCC = []
+    fractionEdgesRemoved = []
+    initial_num_nodes = graph.GetNodes()
+    initial_num_edges = len(ID)#graph.GetEdges()
+    count = 0
+    for index, row in btwnCent.iterrows():
+        fractionInLWCC.append(snap.GetMxWccSz(graph)*graph.GetNodes()/\
+                                initial_num_nodes)
+        fractionEdgesRemoved.append(float(count)/initial_num_edges)
+        count += 1
+        largestEdge= index
+        if graph.IsEdge(largestEdge[0], largestEdge[1]):
+        #print graph.IsNode(largestEdge[1])
+            # print graph.GetEdges()
+        #largestNode = np.max(degreeCentralityDict, key=degreeCentralityDict.get)
+            graph.DelEdge(largestEdge[0], largestEdge[1])
+            # graph.DelEdge(largestEdge[1], largestEdge[0])
+
+
+    y = np.array(fractionInLWCC)
+
+
+    # Compute the area using the composite trapezoidal rule.
+    resiliencyIndex = trapz(y, dx=float(1)/initial_num_edges) # area under curve
+
+    if toPlot:
+        plt.plot(fractionEdgesRemoved, fractionInLWCC)
+        plt.xlabel('Fraction Edges Removed')
+        plt.ylabel('Fraction of Nodes still in LWCC')
+        plt.title('Nodes in LWCC vs. Removal of Edges')
+        plt.show()
+
+    return resiliencyIndex
+
 # want a function that gets the nodes with the highest degree centrality
 # and deletes them from the graph
 # and then computes the size of the largest weakly connected components
@@ -236,7 +362,7 @@ def computeResiliencyFlux(graph, toPlot, attr):
         flux.append(attr[edge.GetId()][2])
 
     fluxdf = pd.DataFrame({'Flux' : flux}, index = ID)
-    fluxdf = fluxdf.sort(['Flux'], ascending = True)
+    fluxdf = fluxdf.sort(['Flux'], ascending = False)
 
 
     fractionInLWCC = []
@@ -269,6 +395,114 @@ def computeResiliencyFlux(graph, toPlot, attr):
     return resiliencyIndex
 
 
+# want a function that gets the edges with the highest passenger flux
+# and deletes them from the graph
+# and then computes the size of the largest weakly connected components
+def computeResiliencyFluxByAirline(graph, toPlot, attr, airID):
+    # degreeCentralityDict = {}
+    #for N in graph.Nodes():
+
+    ID = []
+    flux = []
+    for edge in graph.Edges():
+        if attr[edge.GetId()][0] in airID:
+            ID.append(edge.GetId())
+            flux.append(attr[edge.GetId()][2])
+        else:
+            graph.DelEdge(edge.GetId())
+
+    # print len(ID)
+    #print ID
+
+    fluxdf = pd.DataFrame({'Flux' : flux}, index = ID)
+    #fluxdf = fluxdf.sort(['Flux'], ascending = False)
+
+
+    fractionInLWCC = []
+    fractionEdgesRemoved = []
+    print graph.GetNodes()
+    graph = snap.GetMxWcc(graph)
+    print graph.GetNodes()
+    initial_num_nodes = graph.GetNodes()
+    initial_num_edges = graph.GetEdges()
+    count = 0
+    for index, row in fluxdf.iterrows():
+        fractionInLWCC.append(snap.GetMxWccSz(graph)*graph.GetNodes()/\
+                                initial_num_nodes)
+        fractionEdgesRemoved.append(float(count)/initial_num_edges)
+        count += 1
+        largestEdge = index
+        #largestNode = np.max(degreeCentralityDict, key=degreeCentralityDict.get)
+        graph.DelEdge(largestEdge)
+
+    y = np.array(fractionInLWCC)
+
+
+    # Compute the area using the composite trapezoidal rule.
+    resiliencyIndex = trapz(y, dx=float(1)/initial_num_edges) # area under curve
+
+    if toPlot:
+        plt.plot(fractionEdgesRemoved, fractionInLWCC)
+        plt.xlabel('Fraction Edges Removed')
+        plt.ylabel('Fraction of Nodes still in LWCC')
+        plt.title('Nodes in LWCC vs. Removal of Edges')
+        plt.show()
+
+    return resiliencyIndex
+
+
+# want a function that gets the edges with the highest passenger flux
+# and deletes them from the graph
+# and then computes the size of the largest weakly connected components
+def computeEccenFlux(graph, toPlot, attr):
+    # degreeCentralityDict = {}
+    #for N in graph.Nodes():
+
+    ID = []
+    flux = []
+    for edge in graph.Edges():
+        ID.append(edge.GetId())
+        flux.append(attr[edge.GetId()][2])
+
+    fluxdf = pd.DataFrame({'Flux' : flux}, index = ID)
+    fluxdf = fluxdf.sort(['Flux'], ascending = True)
+
+
+    avgEcc_flux = []
+    fractionEdgesRemoved = []
+    initial_num_nodes = graph.GetNodes()
+    initial_num_edges = graph.GetEdges()
+    count = 0
+    for index, row in fluxdf.iterrows():
+        eccentricities = []
+        for node in graph.Nodes():
+            eccentricities.append(snap.GetNodeEcc(graph, node.GetId(), True))
+
+        print eccentricities
+        avgEcc = float(sum(eccentricities))/len(eccentricities)
+        avgEcc_flux.append(avgEcc)
+        print avgEcc
+        fractionEdgesRemoved.append(float(count)/initial_num_edges)
+        count += 1
+        largestEdge = index
+        #largestNode = np.max(degreeCentralityDict, key=degreeCentralityDict.get)
+        graph.DelEdge(largestEdge)
+
+    y = np.array(avgEcc_flux)
+
+
+    # Compute the area using the composite trapezoidal rule.
+    resiliencyIndex = trapz(y, dx=float(1)/initial_num_edges) # area under curve
+
+    if toPlot:
+        plt.plot(fractionEdgesRemoved, avgEcc_flux)
+        plt.xlabel('Fraction Edges Removed')
+        plt.ylabel('Fraction of Nodes still in LWCC')
+        plt.title('Nodes in LWCC vs. Removal of Edges')
+        plt.show()
+
+    return resiliencyIndex
+
 # ----------------------------------------------------------------------
 
 directory = os.path.join(os.getcwd(), 'data-edges')
@@ -295,16 +529,17 @@ for date in os.listdir(directory):
     f = date.split(".")
 
     if f[1] == "graph":
+        print f[0]
         FIn = snap.TFIn(os.path.join(os.getcwd(), 'data-edges', date))
         G = snap.TNEANet.Load(FIn)
-        print G.GetNodes()
         G_att = pickle.load(open(os.path.join(os.getcwd(), 'data-edges', f[0] + ".dict"),\
          "rb" ))
-
-        pass_flux.append(computeResiliencyFlux(G, True, G_att))
+        #pass_flux.append(computeResiliencyBetwnEdge(G, False, G_att))
+        pass_flux.append(computeResiliencyBetwnEdgeByAirline(G, True, G_att, [19790]))
+        #computeResiliencyFluxByAirline(G, True, G_att, [19790]))
 
 
 print pass_flux
-f = open("pass_flux.txt", 'w')
-for itm in short_path_close:
+f = open("edge_between.txt", 'w')
+for itm in pass_flux:
     f.write("%f\n" % itm)
